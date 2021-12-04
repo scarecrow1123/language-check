@@ -9,6 +9,11 @@ import shutil
 import subprocess
 import sys
 import os
+try:
+    import requests
+except ModuleNotFoundError:
+    os.system("pip install requests")
+    import requests
 
 from contextlib import closing
 from distutils.spawn import find_executable
@@ -128,7 +133,7 @@ def download_lt(update=False):
         return
 
     with closing(TemporaryFile()) as t:
-        with closing(urlopen(url)) as u:
+        with closing(requests.get(url, stream=True)) as u:
             content_len = int(u.headers['Content-Length'])
 
             sys.stdout.write(
@@ -139,10 +144,7 @@ def download_lt(update=False):
 
             chunk_len = content_len // 100
             data_len = 0
-            while True:
-                data = u.read(chunk_len)
-                if not data:
-                    break
+            for data in u.iter_content(chunk_len):
                 data_len += len(data)
                 t.write(data)
                 sys.stdout.write(
